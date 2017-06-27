@@ -8,7 +8,7 @@ scriptname="auto-reroute"
 # curl -s -L -o ~/auto-reroute.sh http://git.io/hsFb && bash ~/auto-reroute.sh
 
 ############################
-#### Script Notes Start ####
+####### Script Notes #######
 ############################
 
 # This script is meant to be run on a machine at your home.
@@ -17,19 +17,9 @@ scriptname="auto-reroute"
 # Because of an added check in v1.0.1 you can be sure that when the script has ended, the route change has actually taken effect, so speedy downloads can begin right away.
 
 ############################
-##### Script Notes End #####
+##### Version History  #####
 ############################
 
-# I didn't know where to put this as i didnt want to put it with the bulk of the script, and i wanted it checked early
-if [ "$(hostname -f | awk -F. '{print $2;}')" == "feralhosting" ]; then
-	echo -e "\033[31m""it looks like you are trying to run this from a Feral slot, it is meant to be run from your home network""\e[0m"
-	exit
-fi
-
-############################
-## Version History Starts ##
-############################
-#
 # v1.0.8 - Added "Console" routes
 # v1.0.6 - Added check for sed
 # v1.0.6 - Added Cogent route option, removed FiberRing options
@@ -39,13 +29,9 @@ fi
 # v1.0.2 - Added new route option (Level3).
 # v1.0.1 - Added route change verification to speed up script. (no more waiting full two minutes)
 # v1.0.0 - First version with official test downloads.
-#
-############################
-### Version History Ends ###
-############################
 
 ############################
-###### Variable Start ######
+##### Feral Variables ######
 ############################
 
 # Feral route ips and route names.
@@ -55,18 +41,15 @@ route_names=(Default Cogent Console#1 Console#2 GTT NTT#1 NTT#2 Level3 Telia)
 # Feral test files.
 test_files=(https://feral.io/test.bin https://cogent-1.feral.io/test.bin https://console-1.feral.io/test.bin https://console-2.feral.io/test.bin https://gtt-1.feral.io/test.bin https://ntt-1.feral.io/test.bin https://ntt-2.feral.io/test.bin https://level3.feral.io/test.bin https://telia.feral.io/test.bin)
 
+############################
+##### Other Variables ######
+############################
+
 # Location of the reroute log
 reroute_log=/tmp/$(openssl rand -hex 10)
 
-# Other
-count=-1
-
 ############################
-####### Variable End #######
-############################
-
-############################
-####### Functions Start ####
+######### Functions ########
 ############################
 
 function reroute_check {
@@ -88,15 +71,16 @@ function requested_route_check {
 }
 
 ############################
-####### Functions End ######
+#### Prerequisite Check ####
 ############################
 
+# Check if running from a feral slot. If so, print error and exit.
+if [ "$(hostname -f | awk -F. '{print $2;}')" == "feralhosting" ]; then
+	echo -e "\033[31m""it looks like you are trying to run this from a Feral slot, it is meant to be run from your home network""\e[0m"
+	exit
+fi
 
-############################
-#### User Script Starts ####
-############################
-
-# Prerequisite check
+# Check if necessary packages are installed
 command -v sed >/dev/null 2>&1 || { echo >&2 "This script requires sed but it's not installed.  Aborting."; exit 1; }
 command -v curl >/dev/null 2>&1 || { echo >&2 "This script requires curl but it's not installed.  Aborting."; exit 1; }
 command -v bc >/dev/null 2>&1 || { echo >&2 "This script requires bc but it's not installed.  Aborting."; exit 1; }
@@ -107,6 +91,10 @@ if [ "$(curl -s https://network.feral.io/reroute | head -2 | grep -c 502)" = "1"
 	echo "The Feral reroute tool is unavailable at this time."
 	error_exit
 fi
+
+############################
+# Determine Fastest Route  #
+############################
 
 # Make a local directory to store log output
 mkdir -p ~/.auto-reroute
@@ -131,6 +119,7 @@ else
 fi
 
 # Loop through the routes using test files to determine download speed
+count=-1
 for i in "${routes[@]}"; do
 	((count++))
 	echo "Testing single segment download speed from ${route_names[$count]}..."
@@ -150,6 +139,10 @@ for i in "${routes[@]}"; do
 	fi
 done
 
+############################
+# Parse Results and Apply  #
+############################
+
 # Find the fastest route/speed/name by sorting results in reroute_log
 fastestroute=$(sort -gr $reroute_log | head -n 1 | awk '{print $3}')
 fastestspeed=$(sort -gr $reroute_log | head -n 1 | awk '{print $1}')
@@ -166,6 +159,10 @@ else
 	reroute_check
 fi
 
+############################
+######### Finish  ##########
+############################
+
 # Clean up
 sed -i 's/ /, /g' $reroute_log
 sed -i "s/^/$(date -u), /g" $reroute_log
@@ -173,11 +170,3 @@ cat $reroute_log >> ~/.auto-reroute/auto-reroute.log
 rm $reroute_log
 
 echo 'All done!'
-
-############################
-##### User Script End  #####
-############################
-
-############################
-##### Core Script Ends #####
-############################
