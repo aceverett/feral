@@ -17,6 +17,12 @@ scriptname="auto-reroute"
 # Because of an added check in v1.0.1 you can be sure that when the script has ended, the route change has actually taken effect, so speedy downloads can begin right away.
 
 ############################
+####### Script TODO ########
+############################
+
+# 
+
+############################
 ##### Version History  #####
 ############################
 
