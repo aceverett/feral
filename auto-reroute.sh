@@ -129,7 +129,7 @@ count=-1
 for i in "${routes[@]}"; do
 	((count++))
 	echo "Testing single segment download speed from ${route_names[$count]}..."
-	messyspeed=$(echo -n "scale=2; " && curl -4 -s -m 120 -L ${test_files[$count]} -w "%{speed_download}" -o /dev/null | sed "s/\,/\./g")
+	messyspeed=$(echo -n "scale=2; " && curl -4 -s -m 60 -L ${test_files[$count]} -w "%{speed_download}" -o /dev/null | sed "s/\,/\./g")
 	if [ -z "$(echo $messyspeed | awk -F\; '{print $2}'| sed 's/ //g')" ]; then
 		echo "There was an issue downloading ${test_files[$count]}"
 		speed="0"
